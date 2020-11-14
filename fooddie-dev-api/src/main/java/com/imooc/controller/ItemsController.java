@@ -47,6 +47,7 @@ public class ItemsController extends BaseController {
         itemInfoVO.setItemParams(itemsParam);
 
         return IMOOCJSONResult.ok(itemInfoVO);
+
     }
 
     @ApiOperation(value = "查询商品评价等级", notes = "查询商品评价等级", httpMethod = "GET")
