@@ -17,7 +17,9 @@ import com.imooc.pojo.vo.OrderVO;
 import com.imooc.service.AddressService;
 import com.imooc.service.ItemService;
 import com.imooc.service.OrderService;
+import com.imooc.utils.DateUtil;
 import java.util.Date;
+import java.util.List;
 import org.n3r.idworker.Sid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -163,8 +165,42 @@ public class OrderServiceImpl implements OrderService {
         orderStatusMapper.updateByPrimaryKeySelective(paidStatus);
     }
 
-    @Override public OrderStatus queryOrderStatusInfo(String orderId) {
+    @Transactional(propagation = Propagation.SUPPORTS)
+    @Override
+    public OrderStatus queryOrderStatusInfo(String orderId) {
         return orderStatusMapper.selectByPrimaryKey(orderId);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    @Override
+    public OrderStatus closeOrder() {
+
+        //查询所有未付款订单 时间超过一天则关闭交易
+        OrderStatus orderStatus = new OrderStatus();
+        orderStatus.setOrderStatus(OrderStatusEnum.WAIT_PAY.type);
+        List<OrderStatus> select = orderStatusMapper.select(orderStatus);
+        for (OrderStatus os : select) {
+            //获得创建订单时间
+            Date createdTime = os.getCreatedTime();
+            //和当前时间对比
+            int daysBetween = DateUtil.daysBetween(createdTime, new Date());
+            if (daysBetween >= 1) {
+                //超过1天 关闭订单
+                doCloseOrder(os.getOrderId());
+            }
+        }
+
+        return null;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    void doCloseOrder(String orderId) {
+
+        OrderStatus orderStatus = new OrderStatus();
+        orderStatus.setOrderId(orderId);
+        orderStatus.setOrderStatus(OrderStatusEnum.CLOSE.type);
+        orderStatus.setCloseTime(new Date());
+        orderStatusMapper.updateByPrimaryKeySelective(orderStatus);
     }
 
 }
