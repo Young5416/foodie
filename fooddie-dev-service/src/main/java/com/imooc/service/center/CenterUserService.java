@@ -5,7 +5,26 @@ import com.imooc.pojo.bo.center.CenterUserBO;
 
 public interface CenterUserService {
 
+    /**
+     * 根据用户id查询用户信息
+     * @param userId
+     * @return
+     */
     public Users queryUserInfo(String userId);
 
+    /**
+     * 用户信息更新
+     * @param userId
+     * @param centerUserBO
+     * @return
+     */
     public Users updateUserInfo(String userId, CenterUserBO centerUserBO);
+
+    /**
+     * 用户头像更新
+     * @param userId
+     * @param faceUrl
+     * @return
+     */
+    public Users updateUserFace(String userId, String faceUrl);
 }
