@@ -1,5 +1,9 @@
 package com.imooc.controller;
 
+import com.imooc.pojo.Orders;
+import com.imooc.service.center.MyOrdersService;
+import com.imooc.utils.IMOOCJSONResult;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
@@ -14,6 +18,10 @@ import springfox.documentation.annotations.ApiIgnore;
 @RestController
 public class BaseController {
 
+
+    @Autowired
+    private MyOrdersService myOrdersService;
+
     public static final String FOODIE_SHOPCART = "shopcart";
     public static final Integer COMMON_PAGE_SIZE = 10;
     public static final Integer PAGE_SIZE = 20;
@@ -23,4 +31,16 @@ public class BaseController {
 
     //微信支付回调url
     public String payReturnUrl = "http://yd4s79.natappfree.cc/orders/notifyMerchantOrderPaid";
+
+    /**
+     * 用于验证用户和订单是否有关联关系，避免非法用户调用
+     * @return
+     */
+    public IMOOCJSONResult checkUserOrder(String userId, String orderId) {
+        Orders order = myOrdersService.queryMyOrder(userId, orderId);
+        if (order == null) {
+            return IMOOCJSONResult.errorMsg("订单不存在！");
+        }
+        return IMOOCJSONResult.ok();
+    }
 }
