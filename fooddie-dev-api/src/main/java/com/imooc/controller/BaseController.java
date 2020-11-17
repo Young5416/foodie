@@ -30,7 +30,7 @@ public class BaseController {
     String paymentUrl = "http://payment.t.mukewang.com/foodie-payment/payment/createMerchantOrder";		// produce
 
     //微信支付回调url
-    public String payReturnUrl = "http://yd4s79.natappfree.cc/orders/notifyMerchantOrderPaid";
+    public String payReturnUrl = "http://47.104.85.220:8088/fooddie-dev-api/orders/notifyMerchantOrderPaid";
 
     /**
      * 用于验证用户和订单是否有关联关系，避免非法用户调用
