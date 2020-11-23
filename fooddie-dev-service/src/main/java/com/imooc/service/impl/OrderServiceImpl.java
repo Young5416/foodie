@@ -11,6 +11,7 @@ import com.imooc.pojo.OrderItems;
 import com.imooc.pojo.OrderStatus;
 import com.imooc.pojo.Orders;
 import com.imooc.pojo.UserAddress;
+import com.imooc.pojo.bo.ShopcartBO;
 import com.imooc.pojo.bo.SubmitOrderBO;
 import com.imooc.pojo.vo.MerchantOrdersVO;
 import com.imooc.pojo.vo.OrderVO;
@@ -18,6 +19,7 @@ import com.imooc.service.AddressService;
 import com.imooc.service.ItemService;
 import com.imooc.service.OrderService;
 import com.imooc.utils.DateUtil;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import org.n3r.idworker.Sid;
@@ -56,7 +58,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     @Override
-    public OrderVO createOrder(SubmitOrderBO submitOrderBO) {
+    public OrderVO createOrder(List<ShopcartBO> shopcartList, SubmitOrderBO submitOrderBO) {
 
         Integer payMethod = submitOrderBO.getPayMethod();
         String addressId = submitOrderBO.getAddressId();
@@ -97,11 +99,14 @@ public class OrderServiceImpl implements OrderService {
         String[] itemSpecIdArr = itemSpecIds.split(",");
         Integer totalAmount = 0; //商品原价累计
         Integer realAmount = 0; //优惠后的实际支付价格累计
+        List<ShopcartBO> toBeRemovedShopcartList = new ArrayList<>();
         //2.1 根据规格id查询规格信息,主要获取价格
         for (String itemSpecId : itemSpecIdArr) {
 
-            //TODO 商品数量从redis中取
-            int buyCounts = 1;
+            ShopcartBO cartItem = getBuyCountsFromShopcart(shopcartList, itemSpecId);
+            //商品数量从redis中取
+            int buyCounts = cartItem.getBuyCounts();
+            toBeRemovedShopcartList.add(cartItem);
 
             ItemsSpec itemsSpec = itemService.queryItemSpecById(itemSpecId);
             totalAmount += itemsSpec.getPriceNormal() * buyCounts;
@@ -151,7 +156,17 @@ public class OrderServiceImpl implements OrderService {
         OrderVO orderVO = new OrderVO();
         orderVO.setOrderId(orderId);
         orderVO.setMerchantOrdersVO(merchantOrdersVO);
+        orderVO.setToBeRemovedShopcartList(toBeRemovedShopcartList);
         return orderVO;
+    }
+
+    private ShopcartBO getBuyCountsFromShopcart(List<ShopcartBO> shopcartList,String specId) {
+        for (ShopcartBO shopcartBO : shopcartList){
+            if (specId.equals(shopcartBO.getSpecId())) {
+                return shopcartBO;
+            }
+        }
+        return null;
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
