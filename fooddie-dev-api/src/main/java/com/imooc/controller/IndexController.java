@@ -8,9 +8,13 @@ import com.imooc.pojo.vo.NewItemsVO;
 import com.imooc.service.CarouselService;
 import com.imooc.service.CategoryService;
 import com.imooc.utils.IMOOCJSONResult;
+import com.imooc.utils.JsonUtils;
+import com.imooc.utils.RedisOperator;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import java.util.ArrayList;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,12 +36,30 @@ public class IndexController {
     @Autowired
     private CategoryService categoryService;
 
+    @Autowired
+    private RedisOperator redisOperator;
+
     @ApiOperation(value = "获取首页轮播图列表", notes = "获取首页轮播图列表", httpMethod = "GET")
     @GetMapping("/carousel")
     public IMOOCJSONResult carousel() {
-        List<Carousel> list = carouselService.queryAll(YesOrNo.YES.type);
+        String carousel = redisOperator.get("carousel");
+        List<Carousel> list = new ArrayList<>();
+        if (StringUtils.isBlank(carousel)) {
+            list = carouselService.queryAll(YesOrNo.YES.type);
+            redisOperator.set("carousel",JsonUtils.objectToJson(list));
+        } else {
+            list = JsonUtils.jsonToList(carousel,Carousel.class);
+        }
+
         return IMOOCJSONResult.ok(list);
     }
+
+    /**
+     * 1.后台运营系统,广告发生更改,重置缓存
+     * 2.定时重置
+     * 3.轮播图可能是广告,redis设置过期时间.过期重置
+     */
+
 
     /**
      * 首页分类展示需求：
@@ -60,8 +82,15 @@ public class IndexController {
         if (rootCatId == null) {
             return IMOOCJSONResult.errorMsg("分类不存在");
         }
+        List<CategoryVO> list = new ArrayList<>();
+        String rootCatCategory = redisOperator.get("subCat:" + rootCatId);
+        if (StringUtils.isBlank(rootCatCategory)) {
+            list = categoryService.getSubCatList(rootCatId);
+            redisOperator.set("subCat:" + rootCatId,JsonUtils.objectToJson(list));
+        } else {
+            list = JsonUtils.jsonToList(rootCatCategory, CategoryVO.class);
+        }
 
-        List<CategoryVO> list = categoryService.getSubCatList(rootCatId);
         return IMOOCJSONResult.ok(list);
     }
 
