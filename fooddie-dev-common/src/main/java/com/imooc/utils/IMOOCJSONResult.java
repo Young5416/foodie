@@ -60,7 +60,7 @@ public class IMOOCJSONResult {
         return new IMOOCJSONResult(500, msg, null);
     }
 
-    public static IMOOCJSONResult errorMUserTicket(String msg) {
+    public static IMOOCJSONResult errorUserTicket(String msg) {
         return new IMOOCJSONResult(557, msg, null);
     }
     

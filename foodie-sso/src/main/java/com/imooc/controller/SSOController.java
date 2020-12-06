@@ -158,12 +158,12 @@ public class SSOController {
         //使用完毕后 销毁票据
         String tmpTicketValue = redisOperator.get(REDIS_TMP_TICKET + ":" + tmpTicket);
         if (StringUtils.isBlank(tmpTicketValue)) {
-            return IMOOCJSONResult.errorMUserTicket("用户票据异常");
+            return IMOOCJSONResult.errorUserTicket("用户票据异常");
         }
 
         //0. 用户票据正常 销毁票据并且拿到cas端全局userTicket,以此获取用户会话
         if (!tmpTicketValue.equals(MD5Utils.getMD5Str(tmpTicket))) {
-            return IMOOCJSONResult.errorMUserTicket("用户票据异常");
+            return IMOOCJSONResult.errorUserTicket("用户票据异常");
         } else {
             //销毁临时票据
             redisOperator.del(REDIS_TMP_TICKET + ":" + tmpTicket);
@@ -173,13 +173,13 @@ public class SSOController {
         String userTicket = getCookie(request, COOKIE_USER_TICKET);
         String userId = redisOperator.get(REDIS_USER_TICKET + ":" + userTicket);
         if (StringUtils.isBlank(userId)) {
-            return IMOOCJSONResult.errorMUserTicket("用户票据异常");
+            return IMOOCJSONResult.errorUserTicket("用户票据异常");
         }
 
         //2. 验证门票对应的会话是否存在
         String userRedis = redisOperator.get(REDIS_USER_TOKEN + ":" + userId);
         if (StringUtils.isBlank(userRedis)) {
-            return IMOOCJSONResult.errorMUserTicket("用户票据异常");
+            return IMOOCJSONResult.errorUserTicket("用户票据异常");
         }
 
         //验证成功,返回ok,携带用户会话
