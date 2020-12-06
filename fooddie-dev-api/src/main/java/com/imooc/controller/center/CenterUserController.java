@@ -1,7 +1,9 @@
 package com.imooc.controller.center;
 
+import com.imooc.controller.BaseController;
 import com.imooc.pojo.Users;
 import com.imooc.pojo.bo.center.CenterUserBO;
+import com.imooc.pojo.vo.UsersVO;
 import com.imooc.resource.FileUpload;
 import com.imooc.service.center.CenterUserService;
 import com.imooc.utils.CookieUtils;
@@ -42,7 +44,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Api(value = "用户信息接口", tags = {"用户信息接口的api接口"})
 @RestController
 @RequestMapping("userInfo")
-public class CenterUserController {
+public class CenterUserController extends BaseController {
 
     @Autowired
     private CenterUserService centerUserService;
@@ -66,11 +68,11 @@ public class CenterUserController {
         }
 
         Users users = centerUserService.updateUserInfo(userId, centerUserBO);
-        users = setNullProperty(users);
+//        users = setNullProperty(users);
 
-        CookieUtils.setCookie(request,response,"user", JsonUtils.objectToJson(users),true);
+        UsersVO usersVO = conventUserVo(users);
 
-        //TODO 后续增加令牌token,整合redis,分布式会话
+        CookieUtils.setCookie(request,response,"user", JsonUtils.objectToJson(usersVO),true);
 
         return IMOOCJSONResult.ok();
     }
@@ -148,11 +150,11 @@ public class CenterUserController {
 
         //更新用户头像到数据库
         Users usersResult = centerUserService.updateUserFace(userId,finalUserFaceUrl);
-        usersResult = setNullProperty(usersResult);
+//        usersResult = setNullProperty(usersResult);
 
-        CookieUtils.setCookie(request,response,"user", JsonUtils.objectToJson(usersResult),true);
+        UsersVO usersVO = conventUserVo(usersResult);
 
-        //TODO 后续增加令牌token,整合redis,分布式会话
+        CookieUtils.setCookie(request,response,"user", JsonUtils.objectToJson(usersVO),true);
 
         return IMOOCJSONResult.ok();
     }

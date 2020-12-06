@@ -3,19 +3,21 @@ package com.imooc.controller;
 import com.imooc.pojo.Users;
 import com.imooc.pojo.bo.ShopcartBO;
 import com.imooc.pojo.bo.UserBo;
+import com.imooc.pojo.vo.UsersVO;
 import com.imooc.service.UserService;
 import com.imooc.utils.CookieUtils;
 import com.imooc.utils.IMOOCJSONResult;
 import com.imooc.utils.JsonUtils;
 import com.imooc.utils.MD5Utils;
-import com.imooc.utils.RedisOperator;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,8 +40,6 @@ public class PassportController extends BaseController{
     @Autowired
     public UserService userService;
 
-    @Autowired
-    public RedisOperator redisOperator;
 
     @ApiOperation(value = "用户名是否存在", notes = "用户名是否存在", httpMethod = "GET ")
     @GetMapping("usernameIsExist")
@@ -84,9 +84,13 @@ public class PassportController extends BaseController{
 
         Users users = userService.creatUser(userBo);
 
-        users = setNullProperty(users);
+//        users = setNullProperty(users);
+        //实现用户的redis会话
+        UsersVO usersVO = conventUserVo(users);
 
-        CookieUtils.setCookie(request,response,"user", JsonUtils.objectToJson(users),true);
+        CookieUtils.setCookie(request,response,"user", JsonUtils.objectToJson(usersVO),true);
+
+        syncShopcartData(users.getId(),request, response);
         //3.请求成功 用户名无重复
         return IMOOCJSONResult.ok();
     }
@@ -107,11 +111,13 @@ public class PassportController extends BaseController{
         if (users == null) {
             return IMOOCJSONResult.errorMsg("用户名或者密码错误");
         }
-        users = setNullProperty(users);
+//        users = setNullProperty(users);
 
-        CookieUtils.setCookie(request,response,"user", JsonUtils.objectToJson(users),true);
+        //实现用户的redis会话
+        UsersVO usersVO = conventUserVo(users);
 
-        //TODO 生成用户toke 存入redis会话
+        CookieUtils.setCookie(request,response,"user", JsonUtils.objectToJson(usersVO),true);
+
         //同步购物车数据
         syncShopcartData(users.getId(),request, response);
 
@@ -192,11 +198,14 @@ public class PassportController extends BaseController{
     @ApiOperation(value = "用户退出登录", notes = "用户退出登录", httpMethod = "POST")
     @PostMapping("logout")
     public IMOOCJSONResult logout(@RequestParam String userId,HttpServletRequest request,HttpServletResponse response){
+        //用户退出登录 清除cookie
         CookieUtils.deleteCookie(request,response,"user");
 
-        //用户退出登录 清除购物车
+        //用户退出登录 清除redis中user的会话信息
+        redisOperator.del(REDIS_USER_TOKEN + ":" + userId);
+
+        //分布式会话清除用户数据
         CookieUtils.deleteCookie(request, response, FOODIE_SHOPCART);
-        //TODO 分布式会话中清除用户数据
 
         return IMOOCJSONResult.ok();
     }
@@ -210,4 +219,5 @@ public class PassportController extends BaseController{
         users.setBirthday(null);
         return users;
     }
+
 }
