@@ -1,0 +1,23 @@
+server:
+  port: 8090
+
+spring:
+  datasource: # 数据源的相关配置
+    url: jdbc:mysql://localhost:3306/foodie-shop-dev?useUnicode=true&characterEncoding=UTF-8&autoReconnect
+    password: Young8614046577
+  redis:
+    database: 1
+    password: 5416
+    host: 192.168.132.128
+    port: 6379
+
+  thymeleaf:
+    mode: HTML
+    encoding: utf-8
+    prefix: classpath:/templates/
+    suffix: .html
+
+mybatis:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+

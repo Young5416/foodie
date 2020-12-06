@@ -14,6 +14,7 @@
     <module>fooddie-dev-mapper</module>
     <module>fooddie-dev-service</module>
     <module>fooddie-dev-api</module>
+    <module>foodie-sso</module>
   </modules>
 
   <properties>
